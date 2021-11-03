@@ -42,11 +42,11 @@ jobs:
 
     - name: Terraform Init
       run: terraform init -input=false
-      working-directory: Infrastructure/env/${{ env.TF_ENV }}
+      working-directory: env/${{ env.TF_ENV }}
 
     - name: Terraform Apply
       run: terraform destroy -auto-approve -no-color -input=false -var 'acr_id=${{ steps.get_acr.outputs.id }}'
-      working-directory: Infrastructure/env/${{ env.TF_ENV }}
+      working-directory: env/${{ env.TF_ENV }}
 
   terraform-destroy-prod:
     needs: terraform-destroy-dev
@@ -74,8 +74,8 @@ jobs:
     
     - name: Terraform Init
       run: terraform init -input=false
-      working-directory: Infrastructure/env/${{ env.TF_ENV }}
+      working-directory: env/${{ env.TF_ENV }}
 
     - name: Terraform Apply
       run: terraform destroy -auto-approve -no-color -input=false
-      working-directory: Infrastructure/env/${{ env.TF_ENV }}
+      working-directory: env/${{ env.TF_ENV }}

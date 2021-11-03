@@ -32,9 +32,9 @@ runs:
     - name: Terraform Init
       run: terraform init -input=false
       shell: pwsh
-      working-directory: Infrastructure/env/${{ inputs.terraform_environment }}
+      working-directory: env/${{ inputs.terraform_environment }}
 
     - name: Terraform Apply
       run: terraform apply -auto-approve -no-color -input=false ${{ inputs.terraform_additional_arguments }}
       shell: pwsh
-      working-directory: Infrastructure/env/${{ env.TF_ENV }}
+      working-directory: env/${{ env.TF_ENV }}
