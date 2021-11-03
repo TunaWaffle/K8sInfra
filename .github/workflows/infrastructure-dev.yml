@@ -14,29 +14,7 @@ env:
   TF_ENV: dev
 
 jobs:
-  check-env:
-    environment: Dev-Staging
-    runs-on: ubuntu-latest
-
-    outputs:
-      acr_id: ${{ steps.get_acr.outputs.id }}
-
-    env:
-      azure_creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - id: get_acr
-      name: Get ACR Info
-      uses: ./.github/actions/get-acr
-      with:
-        resource_group: Demo-Global
-        azure_creds: ${{ env.azure_creds }}
-
   terraform-plan:
-    needs: check-env
-    if: ${{ needs.check-env.outputs.acr_id }} != ''
     environment: Dev-Staging
     runs-on: ubuntu-latest
 
@@ -51,16 +29,23 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - id: get_acr
+      name: Get ACR Info
+      uses: ./.github/actions/get-acr
+      with:
+        resource_group: Demo-Global
+        azure_creds: ${{ env.azure_creds }}
+
     - name: Terraform Plan
       uses: ./.github/actions/tf-plan
       with:
         terraform_version: ${{ env.TF_VERSION }}
         terraform_environment: dev
-        terraform_additional_arguments: "-var 'acr_id=${{ needs.check-env.outputs.acr_id }}'"
+        terraform_additional_arguments: "-var 'acr_id=${{ steps.get_acr.outputs.id }}'"
         azure_creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
 
   terraform-apply:
-    needs: [check-env, terraform-plan]
+    needs: terraform-plan
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment: Dev-Infra
     concurrency: Dev-Infra
@@ -77,10 +62,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - id: get_acr
+      name: Get ACR Info
+      uses: ./.github/actions/get-acr
+      with:
+        resource_group: Demo-Global
+        azure_creds: ${{ env.azure_creds }}
+
     - name: Terraform Apply
       uses: ./.github/actions/tf-apply
       with:
         terraform_version: ${{ env.TF_VERSION }}
         terraform_environment: dev
-        terraform_additional_arguments: "-var 'acr_id=${{ needs.check-env.outputs.acr_id }}'"
+        terraform_additional_arguments: "-var 'acr_id=${{ steps.get_acr.outputs.id }}'"
         azure_creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
